@@ -1,13 +1,13 @@
 # Jonathan Kleppinger 
-# Python program to implement  
-# Webcam Motion Detector 
+# Motion detection tigger for facial recognition
   
 # importing OpenCV
 import cv2
-#Facial Recog
+# Facial Recog
 import face_recognition
 # importing datetime class from datetime library 
 import numpy as np
+from datetime import datetime 
 
 ## Initialize for motion detection
 # Assigning our static_back to None 
@@ -16,23 +16,41 @@ static_back = None
 motion_list = [ None, None ] 
 #trigger
 trigger = 0
+# Loop counter
+loop = 0
 
 ## Initialize for facial recognition
 # Load a sample picture and learn how to recognize it.
-user_image = face_recognition.load_image_file("jonny.jpeg")
-user_face_encoding = face_recognition.face_encodings(user_image)[0]
+
+user_image1 = face_recognition.load_image_file("jonny.jpeg")
+user_face_encoding1 = face_recognition.face_encodings(user_image1)[0]
+
+user_image2 = face_recognition.load_image_file("chantelle.jpg")
+user_face_encoding2 = face_recognition.face_encodings(user_image2)[0]
+
+user_image3 = face_recognition.load_image_file("brett.jpg")
+user_face_encoding3 = face_recognition.face_encodings(user_image3)[0]
+
 # Create arrays of known face encodings and their names
 known_face_encodings = [
-    user_face_encoding,
+    user_face_encoding1,
+    user_face_encoding2,
+    user_face_encoding3,
+
+
 ]
 known_face_names = [
     "Jonathan Kleppinger",
+    "Chantelle Hobbs",
+    "Bread"    
 ]
+
 # Initialize some variables
 face_locations = []
 face_encodings = []
 face_names = []
 process_this_frame = True
+tempNames = [] # Stores the names of the faces recognized
 
 
 # Capturing video 
@@ -40,6 +58,8 @@ video = cv2.VideoCapture(0)
   
 # Infinite while loop to treat stack of image as video 
 while True: 
+    tempNames = [] # Reset the names detected when only motion detecting.
+
     # Reading frame(image) from video 
     check, frame = video.read() 
   
@@ -82,6 +102,11 @@ while True:
   
     # Displaying color frame with contour of motion of object 
     cv2.imshow("Color Frame", frame) 
+
+    loop += 1
+    if loop > 500:
+        static_back = None
+        loop = 0
   
     # if q entered whole process will stop 
     # Hit 'q' on the keyboard to quit!
@@ -122,6 +147,22 @@ while trigger > 10:
             if matches[best_match_index]:
                 name = known_face_names[best_match_index]
 
+                nameFound = False;
+                if len(tempNames) == 0:  # If the list of names detected is empty
+                    tempNames += [name];
+                else:
+                    for i in range(0, len(tempNames)):  # Checks to see if the list contains a detected name
+                        if(tempNames[i] == name):
+                            nameFound = True;
+                            break;
+
+                if(nameFound == False):     # If the name was not previously detected
+                    with open('facesDetected.txt', 'a') as f:
+                        now = datetime.now() # current date and time
+                        currTime = now.strftime("%d/%m/%Y %H:%M:%S")
+                        f.write(name + " " + currTime)
+                        f.write('\n')
+
             face_names.append(name)
 
     process_this_frame = not process_this_frame
@@ -149,8 +190,6 @@ while trigger > 10:
     # Hit 'q' on the keyboard to quit!
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
-
 
 ## END CODE
 video.release()
